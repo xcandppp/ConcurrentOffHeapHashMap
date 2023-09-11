@@ -20,27 +20,40 @@ public class ConcurrentOffHeapHashMap<K, V> extends AbstractMap<K, V> implements
     private int capacity;
     private final int DEFAULT_CAPACITY = 16;
     private int size;
-    private float load_factor;
+    private float loadFactor;
     private final float DEFAULT_LOAD_FACTOR = 0.75f;
-    int threshold;
+    private int threshold;
 
     public ConcurrentOffHeapHashMap() {
-        load_factor = DEFAULT_LOAD_FACTOR;
+        loadFactor = DEFAULT_LOAD_FACTOR;
+        capacity = DEFAULT_CAPACITY;
     }
 
     public ConcurrentOffHeapHashMap(int capacity) {
         this.capacity = capacity;
-        load_factor = DEFAULT_LOAD_FACTOR;
+        loadFactor = DEFAULT_LOAD_FACTOR;
     }
 
-    public ConcurrentOffHeapHashMap(int capacity, float load_factor) {
+    public ConcurrentOffHeapHashMap(int capacity, float loadFactor) {
         this.capacity = capacity;
-        this.load_factor = load_factor;
+        this.loadFactor = loadFactor;
     }
 
-    static final long hash(Object key) {
+    static long hash(Object key) {
         long h;
         return key == null ? 0 : (h = CityHashUtils.cityHash64(CityHashUtils.toByteArray(key))) ^ h >>> 16;
+    }
+
+    @Override
+    public ConcurrentOffHeapHashMap<K, V> clone() {
+        try {
+            ConcurrentOffHeapHashMap<K, V> clone = (ConcurrentOffHeapHashMap<K, V>) super.clone();
+            clone.table = (Node<K, V>[]) new Node[this.table.length];
+            System.arraycopy(this.table, 0, clone.table, 0, this.table.length);
+            return clone;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
     }
 
 
@@ -100,7 +113,7 @@ public class ConcurrentOffHeapHashMap<K, V> extends AbstractMap<K, V> implements
         }
 
         if (newThr == 0) {
-            float ft = (float) newCap * this.load_factor;
+            float ft = (float) newCap * this.loadFactor;
             newThr = newCap < 1073741824 && ft < 1.07374182E9F ? (int) ft : Integer.MAX_VALUE;
         }
 
@@ -271,11 +284,5 @@ public class ConcurrentOffHeapHashMap<K, V> extends AbstractMap<K, V> implements
         }
         this.table = null;
         this.size = 0;
-    }
-
-    @Override
-    public void finalize() {
-        System.out.println("finalized!");
-        this.clear();
     }
 }

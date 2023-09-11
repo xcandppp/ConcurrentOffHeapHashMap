@@ -19,5 +19,6 @@ public class Main {
         map.put("key11","value11");
         map.put("key12","value12");
         System.out.println(map.get("key1"));
+        map.clear();
     }
 }
